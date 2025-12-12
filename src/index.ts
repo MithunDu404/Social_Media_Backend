@@ -1,0 +1,12 @@
+import express from 'express'
+import authRoutes from './routes/auth.routes.js'
+import userRoutes from './routes/user.routes.js'
+import postRoutes from './routes/post.routes.js'
+import commentRoutes from './routes/comment.routes.js'
+import replyRoutes from './routes/reply.routes.js'
+import likeRoutes from './routes/like.routes.js'
+import mediaRoutes from './routes/media.routes.js'
+import messageRoutes from './routes/message.routes.js'
+import notificationRoutes from './routes/notification.routes.js'
+import followRoutes from './routes/follow.routes.js'
+
