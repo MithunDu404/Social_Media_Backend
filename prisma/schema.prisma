@@ -29,9 +29,9 @@ enum NotificationReason {
 
 model User {
   id          BigInt       @id @default(autoincrement())
-  user_name   String
-  password    String
-  email       String
+  user_name   String       @unique
+  password    String      
+  email       String       @unique
   phone       String?
   dob         DateTime? 
   location    String? 
