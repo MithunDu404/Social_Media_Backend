@@ -131,11 +131,6 @@ export const deleteComment = async (req: Request, res: Response) => {
     if (existing.user_id !== userId)
       return res.status(403).json({ message: "Unauthorized" });
 
-    // Delete replies first (FK constraint safety)
-    await prisma.reply.deleteMany({
-      where: { comment_id: commentId },
-    });
-
     await prisma.comment.delete({
       where: { id: commentId },
     });
