@@ -196,7 +196,7 @@ export const deletePost = async (req: Request, res: Response) => {
     if (post.user_id !== (req as any).userId)
       return res.status(403).json({ message: "Unauthorized" });
 
-    await prisma.media.deleteMany({ where: { post_id: postId } });
+    // await prisma.media.deleteMany({ where: { post_id: postId } });
 
     await prisma.post.delete({ where: { id: postId } });
 
