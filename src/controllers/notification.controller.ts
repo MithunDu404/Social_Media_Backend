@@ -90,26 +90,26 @@ export const markAllAsRead = async (req: Request, res: Response) => {
 // --------------------------------------
 export const deleteNotification = async (req: Request, res: Response) => {
   try {
-    const notificationId = parseInt((req as any).params.notificationId);
+    // const notificationId = parseInt((req as any).params.notificationId);
     const userId = (req as any).userId as number;
 
-    const notification = await prisma.notification.findUnique({
-      where: { id: notificationId },
+    // const notification = await prisma.notification.findUnique({
+    //   where: { id: notificationId },
+    // });
+
+    // if (!notification) {
+    //   return res.status(404).json({ message: "Notification not found" });
+    // }
+
+    // if (notification.receiver_id !== userId) {
+    //   return res.status(403).json({ message: "Unauthorized" });
+    // }
+
+    await prisma.notification.deleteMany({
+      where: { is_read: true },
     });
 
-    if (!notification) {
-      return res.status(404).json({ message: "Notification not found" });
-    }
-
-    if (notification.receiver_id !== userId) {
-      return res.status(403).json({ message: "Unauthorized" });
-    }
-
-    await prisma.notification.delete({
-      where: { id: notificationId },
-    });
-
-    return res.json({ message: "Notification deleted successfully" });
+    return res.json({ message: "Notifications deleted successfully" });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Internal server error" });

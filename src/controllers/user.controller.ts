@@ -83,8 +83,9 @@ export const getUserPosts = async (req: Request, res: Response) => {
       where: { user_id: parseInt(id) },
       include: {
         medias: true,
-        comments: true,
-        likes: true,
+        _count:{
+          select:{comments: true, likes: true}
+        }
       },
     });
 

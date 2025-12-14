@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
+import { createNotification } from "../services/notification.service.js";
 
 // ------------------------------------
 // TOGGLE POST LIKE
@@ -8,6 +9,13 @@ export const togglePostLike = async (req: Request, res: Response) => {
   try {
     const postId = parseInt((req as any).params.postId);
     const userId = (req as any).userId as number;
+
+    const post = await prisma.post.findUnique({
+      where:{id: postId},
+      select:{user_id: true}
+    })
+
+    if(!post) return res.status(404).json({message: "Post not found"});
 
     const existing = await prisma.postLikes.findUnique({
       where: {
@@ -37,6 +45,13 @@ export const togglePostLike = async (req: Request, res: Response) => {
       },
     });
 
+    await createNotification({
+      creatorId: userId,
+      receiverId: post.user_id,
+      reason: "POST_LIKE",
+    });
+
+
     return res.json({ liked: true });
   } catch (err) {
     console.error(err);
@@ -51,6 +66,13 @@ export const toggleCommentLike = async (req: Request, res: Response) => {
   try {
     const commentId = parseInt((req as any).params.commentId);
     const userId = (req as any).userId as number;
+
+    const comment = await prisma.comment.findUnique({
+      where:{id: commentId},
+      select:{user_id: true}
+    })
+
+    if(!comment) return res.status(404).json({message: "Comment not found"});
 
     const existing = await prisma.commentLikes.findUnique({
       where: {
@@ -80,6 +102,12 @@ export const toggleCommentLike = async (req: Request, res: Response) => {
       },
     });
 
+    await createNotification({
+      creatorId: userId,
+      receiverId: comment.user_id,
+      reason: "COMMENT_LIKE",
+    });
+
     return res.json({ liked: true });
   } catch (err) {
     console.error(err);
@@ -94,6 +122,13 @@ export const toggleReplyLike = async (req: Request, res: Response) => {
   try {
     const replyId = parseInt((req as any).params.replyId);
     const userId = (req as any).userId as number;
+
+    const reply = await prisma.reply.findUnique({
+      where:{id: replyId},
+      select:{user_id: true}
+    })
+
+    if(!reply) return res.status(404).json({message: "Reply not found"});
 
     const existing = await prisma.replyLikes.findUnique({
       where: {
@@ -121,6 +156,12 @@ export const toggleReplyLike = async (req: Request, res: Response) => {
         reply_id: replyId,
         user_id: userId,
       },
+    });
+
+    await createNotification({
+      creatorId: userId,
+      receiverId: reply.user_id,
+      reason: "REPLY_LIKE",
     });
 
     return res.json({ liked: true });

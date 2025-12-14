@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
+import { createNotification } from "../services/notification.service.js";
 
 // --------------------------------------
 // CREATE REPLY
@@ -17,6 +18,7 @@ export const createReply = async (req: Request, res: Response) => {
     // Check comment exists
     const commentExists = await prisma.comment.findUnique({
       where: { id: commentId },
+      select: { user_id: true}
     });
 
     if (!commentExists) {
@@ -38,6 +40,12 @@ export const createReply = async (req: Request, res: Response) => {
           },
         },
       },
+    });
+
+    await createNotification({
+      creatorId: userId,
+      receiverId: commentExists.user_id,
+      reason: "REPLY",
     });
 
     return res.status(201).json({

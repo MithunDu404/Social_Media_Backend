@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
+import { createNotification } from "../services/notification.service.js";
 
 // --------------------------------------
 // FOLLOW / UNFOLLOW (TOGGLE)
@@ -52,6 +53,12 @@ export const toggleFollow = async (req: Request, res: Response) => {
         follower_id: followerId,
         following_id: followingId,
       },
+    });
+    
+    await createNotification({
+      creatorId: followerId,
+      receiverId: followingId,
+      reason: "FOLLOW",
     });
 
     return res.json({ following: true });

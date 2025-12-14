@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
+import { createNotification } from "../services/notification.service.js";
 
 // --------------------------------------
 // SEND MESSAGE
@@ -35,6 +36,13 @@ export const sendMessage = async (req: Request, res: Response) => {
         message,
       },
     });
+
+    await createNotification({
+      creatorId: senderId,
+      receiverId: receiverId,
+      reason: "MESSAGE",
+    });
+
 
     return res.status(201).json({
       message: "Message sent successfully",

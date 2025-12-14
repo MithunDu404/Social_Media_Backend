@@ -19,6 +19,6 @@ router.patch("/:notificationId/read", authMiddleware, markAsRead);
 router.patch("/read-all", authMiddleware, markAllAsRead);
 
 // Delete a notification
-router.delete("/:notificationId", authMiddleware, deleteNotification);
+router.delete("/", authMiddleware, deleteNotification);
 
 export default router;
