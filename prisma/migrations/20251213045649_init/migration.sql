@@ -3,7 +3,7 @@ CREATE TYPE "NotificationReason" AS ENUM ('FOLLOW', 'POST_LIKE', 'COMMENT_LIKE',
 
 -- CreateTable
 CREATE TABLE "User" (
-    "id" BIGSERIAL NOT NULL,
+    "id" SERIAL NOT NULL,
     "user_name" TEXT NOT NULL,
     "password" TEXT NOT NULL,
     "email" TEXT NOT NULL,
@@ -18,56 +18,56 @@ CREATE TABLE "User" (
 
 -- CreateTable
 CREATE TABLE "Post" (
-    "id" BIGSERIAL NOT NULL,
+    "id" SERIAL NOT NULL,
     "title" TEXT NOT NULL,
     "blog" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "user_id" BIGINT NOT NULL,
+    "user_id" INTEGER NOT NULL,
 
     CONSTRAINT "Post_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Media" (
-    "id" BIGSERIAL NOT NULL,
+    "id" SERIAL NOT NULL,
     "url" TEXT NOT NULL,
     "content_type" TEXT NOT NULL,
-    "size" BIGINT,
+    "size" INTEGER,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "post_id" BIGINT NOT NULL,
+    "post_id" INTEGER NOT NULL,
 
     CONSTRAINT "Media_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Comment" (
-    "id" BIGSERIAL NOT NULL,
+    "id" SERIAL NOT NULL,
     "comment" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "post_id" BIGINT NOT NULL,
-    "user_id" BIGINT NOT NULL,
+    "post_id" INTEGER NOT NULL,
+    "user_id" INTEGER NOT NULL,
 
     CONSTRAINT "Comment_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Reply" (
-    "id" BIGSERIAL NOT NULL,
+    "id" SERIAL NOT NULL,
     "reply" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "comment_id" BIGINT NOT NULL,
-    "user_id" BIGINT NOT NULL,
+    "comment_id" INTEGER NOT NULL,
+    "user_id" INTEGER NOT NULL,
 
     CONSTRAINT "Reply_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "PostLikes" (
-    "post_id" BIGINT NOT NULL,
-    "user_id" BIGINT NOT NULL,
+    "post_id" INTEGER NOT NULL,
+    "user_id" INTEGER NOT NULL,
     "likedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "PostLikes_pkey" PRIMARY KEY ("post_id","user_id")
@@ -75,8 +75,8 @@ CREATE TABLE "PostLikes" (
 
 -- CreateTable
 CREATE TABLE "CommentLikes" (
-    "comment_id" BIGINT NOT NULL,
-    "user_id" BIGINT NOT NULL,
+    "comment_id" INTEGER NOT NULL,
+    "user_id" INTEGER NOT NULL,
     "likedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "CommentLikes_pkey" PRIMARY KEY ("comment_id","user_id")
@@ -84,8 +84,8 @@ CREATE TABLE "CommentLikes" (
 
 -- CreateTable
 CREATE TABLE "ReplyLikes" (
-    "reply_id" BIGINT NOT NULL,
-    "user_id" BIGINT NOT NULL,
+    "reply_id" INTEGER NOT NULL,
+    "user_id" INTEGER NOT NULL,
     "likedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "ReplyLikes_pkey" PRIMARY KEY ("reply_id","user_id")
@@ -93,8 +93,8 @@ CREATE TABLE "ReplyLikes" (
 
 -- CreateTable
 CREATE TABLE "Follow" (
-    "follower_id" BIGINT NOT NULL,
-    "following_id" BIGINT NOT NULL,
+    "follower_id" INTEGER NOT NULL,
+    "following_id" INTEGER NOT NULL,
     "followedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Follow_pkey" PRIMARY KEY ("follower_id","following_id")
@@ -102,9 +102,9 @@ CREATE TABLE "Follow" (
 
 -- CreateTable
 CREATE TABLE "Message" (
-    "id" BIGSERIAL NOT NULL,
-    "sender_id" BIGINT NOT NULL,
-    "receiver_id" BIGINT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "sender_id" INTEGER NOT NULL,
+    "receiver_id" INTEGER NOT NULL,
     "message" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -115,15 +115,21 @@ CREATE TABLE "Message" (
 
 -- CreateTable
 CREATE TABLE "Notification" (
-    "id" BIGSERIAL NOT NULL,
-    "creator_id" BIGINT NOT NULL,
-    "receiver_id" BIGINT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "creator_id" INTEGER NOT NULL,
+    "receiver_id" INTEGER NOT NULL,
     "reason" "NotificationReason" NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "is_read" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "Notification_pkey" PRIMARY KEY ("id")
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_user_name_key" ON "User"("user_name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- AddForeignKey
 ALTER TABLE "Post" ADD CONSTRAINT "Post_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

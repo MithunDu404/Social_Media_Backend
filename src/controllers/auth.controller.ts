@@ -48,9 +48,9 @@ export const registerUser = async (req: Request, res: Response) => {
       },
     });
 
-    const token = jwt.sign({ id: user.id.toString() }, JWT_SECRET, { expiresIn: "7d" });
+    const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "1d" });
 
-    return res.status(201).json({ message: "User registered successfully",token, user: {...user, id:user.id.toString(), password:""}});
+    return res.status(201).json({ message: "User registered successfully",token, user: {...user, password:""}});
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Internal server error" });
@@ -83,28 +83,27 @@ export const loginUser = async (req: Request, res: Response) => {
     }
 
     // Create JWT
-    const token = jwt.sign({ id: user.id.toString() }, JWT_SECRET, { expiresIn: "7d" });
+    const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "7d" });
 
-    return res.json({ message: "Login successful", token, user:{...user,id: user.id.toString(),password: ""}});
+    return res.json({ message: "Login successful", token, user:{...user, password: ""}});
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
 
-// --------------------------------------
 // GET ME (requires auth)
-// --------------------------------------
+
 export const getMe = async (req: Request, res: Response) => {
   try {
-    // req.user is added by authMiddleware
+    // req.userId is added by authMiddleware
     const user = await prisma.user.findUnique({
       where: { id: (req as any).userId}
     });
 
     if(!user) return res.status(404).json({message: "User not found"})
 
-    return res.json({...user,id: user.id.toString(), password: ""});
+    return res.json({...user, password: ""});
   } catch (err) {
     return res.status(500).json({ message: "Internal Server Error" });
   }

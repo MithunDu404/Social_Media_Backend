@@ -28,7 +28,7 @@ enum NotificationReason {
 // *********************************
 
 model User {
-  id          BigInt       @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   user_name   String       @unique
   password    String      
   email       String       @unique
@@ -57,12 +57,12 @@ model User {
 }
 
 model Post {
-  id        BigInt      @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   title     String
   blog      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  user_id   BigInt
+  user_id   Int
 
   user      User   @relation(fields: [user_id], references: [id])
   medias    Media[]
@@ -71,24 +71,24 @@ model Post {
 }
 
 model Media {
-  id           BigInt      @id @default(autoincrement())
+  id           Int      @id @default(autoincrement())
   url          String    // UploadThing URL
   content_type String
-  size         BigInt?
+  size         Int?
   createdAt    DateTime @default(now())
   
-  post_id      BigInt
+  post_id      Int
   post         Post     @relation(fields: [post_id], references: [id])
 }
 
 model Comment {
-  id         BigInt       @id @default(autoincrement())
+  id         Int       @id @default(autoincrement())
   comment    String
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   
-  post_id    BigInt
-  user_id    BigInt
+  post_id    Int
+  user_id    Int
 
   post       Post     @relation(fields: [post_id], references: [id])
   user       User     @relation(fields: [user_id], references: [id])
@@ -97,13 +97,13 @@ model Comment {
 }
 
 model Reply {
-  id         BigInt      @id @default(autoincrement())
+  id         Int      @id @default(autoincrement())
   reply      String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   
-  comment_id BigInt
-  user_id    BigInt
+  comment_id Int
+  user_id    Int
 
   comment    Comment @relation(fields: [comment_id], references: [id])
   user       User    @relation(fields: [user_id], references: [id])
@@ -113,8 +113,8 @@ model Reply {
 // *********************************
 
 model PostLikes {
-  post_id  BigInt
-  user_id  BigInt
+  post_id  Int
+  user_id  Int
   likedAt  DateTime @default(now())
 
   post     Post @relation(fields: [post_id], references: [id])
@@ -124,8 +124,8 @@ model PostLikes {
 }
 
 model CommentLikes {
-  comment_id BigInt
-  user_id    BigInt
+  comment_id Int
+  user_id    Int
   likedAt    DateTime @default(now())
 
   comment    Comment @relation(fields: [comment_id], references: [id])
@@ -135,8 +135,8 @@ model CommentLikes {
 }
 
 model ReplyLikes {
-  reply_id BigInt
-  user_id  BigInt
+  reply_id Int
+  user_id  Int
   likedAt  DateTime @default(now())
 
   reply    Reply @relation(fields: [reply_id], references: [id])
@@ -148,8 +148,8 @@ model ReplyLikes {
 // *********************************
 
 model Follow {
-  follower_id BigInt
-  following_id BigInt
+  follower_id Int // user who is following
+  following_id Int // user who is being followed
   followedAt  DateTime @default(now())
 
   follower User @relation("UserFollowers", fields: [follower_id], references: [id])
@@ -159,9 +159,9 @@ model Follow {
 }
 
 model Message {
-  id         BigInt      @id @default(autoincrement())
-  sender_id  BigInt
-  receiver_id BigInt
+  id         Int      @id @default(autoincrement())
+  sender_id  Int
+  receiver_id Int
   message    String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -172,9 +172,9 @@ model Message {
 }
 
 model Notification {
-  id          BigInt  @id @default(autoincrement())
-  creator_id  BigInt
-  receiver_id BigInt
+  id          Int  @id @default(autoincrement())
+  creator_id  Int
+  receiver_id Int
   reason      NotificationReason
   createdAt   DateTime @default(now())
   is_read     Boolean   @default(false)
