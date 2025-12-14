@@ -5,6 +5,7 @@ import postRoutes from './routes/post.routes.js'
 import commentRoutes from './routes/comment.routes.js'
 import replyRoutes from './routes/reply.routes.js'
 import likeRoutes from './routes/like.routes.js'
+import followRoutes from './routes/follow.routes.js'
 
 const PORT = process.env.PORT || 3000;
 
@@ -17,6 +18,7 @@ app.use("/posts",postRoutes);
 app.use("/comments",commentRoutes);
 app.use("/replies",replyRoutes);
 app.use("/likes",likeRoutes);
+app.use("/follow",followRoutes);
 
 app.listen(PORT, ()=>{
     console.log(`Server is Running on port: ${PORT}
