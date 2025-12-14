@@ -1,13 +1,13 @@
-import { Request, Response } from "express";
-import { prisma } from "../lib/prisma";
+import type { Request, Response } from "express";
+import { prisma } from "../lib/prisma.js";
 
 // --------------------------------------
 // CREATE COMMENT
 // --------------------------------------
 export const createComment = async (req: Request, res: Response) => {
   try {
-    const postId = BigInt(req.params.postId);
-    const userId = req.user.id as bigint;
+    const postId = parseInt((req as any).params.postId);
+    const userId = (req as any).userId as number;
     const { comment } = req.body;
 
     if (!comment)
@@ -53,7 +53,7 @@ export const createComment = async (req: Request, res: Response) => {
 // --------------------------------------
 export const getPostComments = async (req: Request, res: Response) => {
   try {
-    const postId = BigInt(req.params.postId);
+    const postId = parseInt((req as any).params.postId);
 
     const comments = await prisma.comment.findMany({
       where: { post_id: postId },
@@ -65,19 +65,9 @@ export const getPostComments = async (req: Request, res: Response) => {
             picture_url: true,
           },
         },
-        replies: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                user_name: true,
-                picture_url: true,
-              },
-            },
-            likes: true,
-          },
-        },
-        likes: true,
+        _count:{
+            select: {replies: true, likes: true}
+        }
       },
       orderBy: { createdAt: "asc" },
     });
@@ -94,8 +84,8 @@ export const getPostComments = async (req: Request, res: Response) => {
 // --------------------------------------
 export const updateComment = async (req: Request, res: Response) => {
   try {
-    const commentId = BigInt(req.params.commentId);
-    const userId = req.user.id as bigint;
+    const commentId = parseInt((req as any).params.commentId);
+    const userId = (req as any).userId as number;
     const { comment } = req.body;
 
     if (!comment)
@@ -128,8 +118,8 @@ export const updateComment = async (req: Request, res: Response) => {
 // --------------------------------------
 export const deleteComment = async (req: Request, res: Response) => {
   try {
-    const commentId = BigInt(req.params.commentId);
-    const userId = req.user.id as bigint;
+    const commentId = parseInt((req as any).params.commentId);
+    const userId = (req as any).userId as number;
 
     const existing = await prisma.comment.findUnique({
       where: { id: commentId },

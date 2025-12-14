@@ -64,7 +64,7 @@ model Post {
   updatedAt DateTime @updatedAt
   user_id   Int
 
-  user      User   @relation(fields: [user_id], references: [id])
+  user      User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
   medias    Media[]
   comments  Comment[]
   likes     PostLikes[]
@@ -78,7 +78,7 @@ model Media {
   createdAt    DateTime @default(now())
   
   post_id      Int
-  post         Post     @relation(fields: [post_id], references: [id])
+  post         Post     @relation(fields: [post_id], references: [id], onDelete: Cascade)
 }
 
 model Comment {
@@ -90,7 +90,7 @@ model Comment {
   post_id    Int
   user_id    Int
 
-  post       Post     @relation(fields: [post_id], references: [id])
+  post       Post     @relation(fields: [post_id], references: [id], onDelete: Cascade)
   user       User     @relation(fields: [user_id], references: [id])
   replies    Reply[]
   likes      CommentLikes[]
@@ -105,7 +105,7 @@ model Reply {
   comment_id Int
   user_id    Int
 
-  comment    Comment @relation(fields: [comment_id], references: [id])
+  comment    Comment @relation(fields: [comment_id], references: [id], onDelete: Cascade)
   user       User    @relation(fields: [user_id], references: [id])
   likes      ReplyLikes[]
 }
@@ -117,7 +117,7 @@ model PostLikes {
   user_id  Int
   likedAt  DateTime @default(now())
 
-  post     Post @relation(fields: [post_id], references: [id])
+  post     Post @relation(fields: [post_id], references: [id], onDelete: Cascade)
   user     User @relation(fields: [user_id], references: [id])
 
   @@id([post_id, user_id])
@@ -128,7 +128,7 @@ model CommentLikes {
   user_id    Int
   likedAt    DateTime @default(now())
 
-  comment    Comment @relation(fields: [comment_id], references: [id])
+  comment    Comment @relation(fields: [comment_id], references: [id], onDelete: Cascade)
   user       User    @relation(fields: [user_id], references: [id])
 
   @@id([comment_id, user_id])
@@ -139,7 +139,7 @@ model ReplyLikes {
   user_id  Int
   likedAt  DateTime @default(now())
 
-  reply    Reply @relation(fields: [reply_id], references: [id])
+  reply    Reply @relation(fields: [reply_id], references: [id], onDelete: Cascade)
   user     User   @relation(fields: [user_id], references: [id])
 
   @@id([reply_id, user_id])
