@@ -84,14 +84,14 @@ export const getPostById = async (req: Request, res: Response) => {
 
     if (!post) return res.status(404).json({ message: "Post not found" });
 
-   const { _count, ...rest } = post;
-   const formmatedPost = {
-    ...rest,
-    commentCount: _count.comments,
-    likeCount: _count.likes
-   }
+  //  const { _count, ...rest } = post;
+  //  const formmatedPost = {
+  //   ...rest,
+  //   commentCount: _count.comments,
+  //   likeCount: _count.likes
+  //  }
 
-    return res.json(formmatedPost);
+    return res.json(post);
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "internal server error" });
@@ -107,9 +107,11 @@ export const getUserPosts = async (req: Request, res: Response) => {
 
     const posts = await prisma.post.findMany({
       where: { user_id: userId },
-      include: { medias: true, 
+      include: { 
+        medias: true,
+        user: { select: { id: true, user_name: true, picture_url: true } },
         _count:{
-          select:{ likes: true, comments: true }
+          select:{ comments: true, likes: true}
         }
       },
       orderBy: { createdAt: "desc" },
@@ -142,9 +144,9 @@ export const getFeedPosts = async (req: Request, res: Response) => {
       },
       include: {
         medias: true,
-        user: true,
-        _count:{ 
-          select:{ likes: true, comments: true}
+        user: { select: { id: true, user_name: true, picture_url: true } },
+        _count:{
+          select:{ comments: true, likes: true}
         }
       },
       orderBy: { createdAt: "desc" },
