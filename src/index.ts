@@ -8,11 +8,18 @@ import likeRoutes from './routes/like.routes.js'
 import followRoutes from './routes/follow.routes.js'
 import messageRoutes from './routes/message.routes.js'
 import notificationRoutes from './routes/notification.routes.js'
+import cors from "cors";
 
 const PORT = process.env.PORT || 3000;
 
-
 const app = express();
+
+app.use(
+  cors({
+    origin: "http://localhost:3001",
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use("/auth",authRoutes);
 app.use("/users", userRoutes);

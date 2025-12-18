@@ -1,9 +1,57 @@
 import type { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { OAuth2Client } from "google-auth-library";
 import { prisma } from "../lib/prisma";   
 
 const JWT_SECRET = process.env.JWT_SECRET || "secretkey";
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+
+export const registerUserGoogle = async (req: Request, res: Response) => {
+  const { credential } = req.body;
+
+  const ticket = await client.verifyIdToken({
+    idToken: credential,
+    audience: process.env.GOOGLE_CLIENT_ID!,
+  });
+
+  const payload = ticket.getPayload();
+
+  if (!payload) {
+    return res.status(401).json({ message: "Invalid Google token" });
+  }
+
+  const { email, name, picture, sub } = payload;
+
+  if(!email) return res.status(401).json({ message: "Invalid Google Email" });
+
+  // 1️⃣ Find or create user
+  let user = await prisma.user.findUnique({ where: { email } });
+
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        email: email,
+        user_name: name || "profile",
+        picture_url: picture ?? null,
+        password: sub, // or null if optional
+      },
+    });
+  }
+
+  // 2️⃣ Issue YOUR JWT
+  const token = jwt.sign(
+    { userId: user.id },
+    process.env.JWT_SECRET!,
+    { expiresIn: "7d" }
+  );
+
+  res.json({
+    token,
+    user:{...user, password:""},
+  });
+}
 
 // REGISTER
 export const registerUser = async (req: Request, res: Response) => {
@@ -15,16 +63,16 @@ export const registerUser = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // Check if user exists
-    const isUsername = await prisma.user.findUnique({
-      where:{
-        user_name: user_name
-      }
-    });
+    // // Check if user exists
+    // const isUsername = await prisma.user.findUnique({
+    //   where:{
+    //     user_name: user_name
+    //   }
+    // });
 
-    if(isUsername){
-        return res.status(400).json({ message: "Username already registered" });
-    }
+    // if(isUsername){
+    //     return res.status(400).json({ message: "Username already registered" });
+    // }
 
     const existing = await prisma.user.findUnique({
       where:{
@@ -48,7 +96,7 @@ export const registerUser = async (req: Request, res: Response) => {
       },
     });
 
-    const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "1d" });
+    const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "7d" });
 
     return res.status(201).json({ message: "User registered successfully",token, user: {...user, password:""}});
   } catch (err) {

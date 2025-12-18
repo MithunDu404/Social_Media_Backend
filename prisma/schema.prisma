@@ -29,7 +29,7 @@ enum NotificationReason {
 
 model User {
   id          Int       @id @default(autoincrement())
-  user_name   String       @unique
+  user_name   String       
   password    String      
   email       String       @unique
   phone       String?
