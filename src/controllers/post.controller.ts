@@ -70,12 +70,17 @@ export const addMediaToPost = async (req: Request, res: Response) => {
 export const getPostById = async (req: Request, res: Response) => {
   try {
     const postId = parseInt((req as any).params.postId);
+    const userId = parseInt((req as any).userId);
 
     const post = await prisma.post.findUnique({
       where: { id: postId },
       include: {
         medias: true,
         user: { select: { id: true, user_name: true, picture_url: true } },
+        likes: {
+          where: {user_id: userId},
+          select: {user_id: true},
+        },
         _count:{
           select:{ comments: true, likes: true}
         }
@@ -84,14 +89,15 @@ export const getPostById = async (req: Request, res: Response) => {
 
     if (!post) return res.status(404).json({ message: "Post not found" });
 
-  //  const { _count, ...rest } = post;
-  //  const formmatedPost = {
-  //   ...rest,
-  //   commentCount: _count.comments,
-  //   likeCount: _count.likes
-  //  }
+    const {likes, _count, ...rest} = post;
+    const formmatedPost = {
+      ...rest,
+      commentCount: _count.comments,
+      likeCount: _count.likes,
+      isLiked: likes.length > 0,
+    }
 
-    return res.json(post);
+    return res.json(formmatedPost);
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "internal server error" });
@@ -104,12 +110,17 @@ export const getPostById = async (req: Request, res: Response) => {
 export const getUserPosts = async (req: Request, res: Response) => {
   try {
     const userId = parseInt((req as any).params.userId);
+    const loggedUserId = parseInt((req as any).userId);
 
     const posts = await prisma.post.findMany({
       where: { user_id: userId },
       include: { 
         medias: true,
         user: { select: { id: true, user_name: true, picture_url: true } },
+        likes: {
+          where: {user_id: loggedUserId},
+          select: {user_id: true},
+        },
         _count:{
           select:{ comments: true, likes: true}
         }
@@ -117,7 +128,17 @@ export const getUserPosts = async (req: Request, res: Response) => {
       orderBy: { createdAt: "desc" },
     });
 
-    return res.json(posts);
+    const formmatedPosts = posts.map((post) =>{
+      const {likes, _count, ...rest} = post;
+      return {
+        ...rest,
+        commentCount: _count.comments,
+        likeCount: _count.likes,
+        isLiked: likes.length > 0,
+      }
+    })
+
+    return res.json(formmatedPosts);
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "internal server error" });
@@ -145,6 +166,10 @@ export const getFeedPosts = async (req: Request, res: Response) => {
       include: {
         medias: true,
         user: { select: { id: true, user_name: true, picture_url: true } },
+        likes: {
+          where: {user_id: userId},
+          select: {user_id: true},
+        },
         _count:{
           select:{ comments: true, likes: true}
         }
@@ -152,7 +177,17 @@ export const getFeedPosts = async (req: Request, res: Response) => {
       orderBy: { createdAt: "desc" },
     });
 
-    return res.json(posts);
+    const formmatedPosts = posts.map((post) =>{
+      const {likes, _count, ...rest} = post;
+      return {
+        ...rest,
+        commentCount: _count.comments,
+        likeCount: _count.likes,
+        isLiked: likes.length > 0,
+      }
+    })
+
+    return res.json(formmatedPosts);
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Internal server error" });
