@@ -9,6 +9,7 @@ import followRoutes from './routes/follow.routes.js'
 import messageRoutes from './routes/message.routes.js'
 import notificationRoutes from './routes/notification.routes.js'
 import cors from "cors";
+import { globalRateLimiter } from './middlewares/globalRateLimiter.middleware.js'
 
 const PORT = process.env.PORT || 3000;
 
@@ -20,6 +21,9 @@ app.use(
     credentials: true,
   })
 );
+
+app.set("trust proxy", 1);
+app.use(globalRateLimiter);
 app.use(express.json());
 app.use("/auth",authRoutes);
 app.use("/users", userRoutes);
