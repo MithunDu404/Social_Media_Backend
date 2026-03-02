@@ -2,22 +2,28 @@ import type { Request, Response } from "express";
 import { prisma } from "../lib/prisma.js";
 import { createNotification } from "../services/notification.service.js";
 
-// --------------------------------------
-// CREATE COMMENT
-// --------------------------------------
+const MAX_COMMENT_LENGTH = 2000;
+
+const params = (req: Request) => req.params as Record<string, string>;
+const query = (req: Request) => req.query as Record<string, string>;
+
+// ─── CREATE COMMENT ───────────────────────────────────────────
 export const createComment = async (req: Request, res: Response) => {
   try {
-    const postId = parseInt((req as any).params.postId);
-    const userId = (req as any).userId as number;
+    const postId = parseInt(params(req).postId ?? '');
+    if (isNaN(postId)) return res.status(400).json({ message: "Invalid post ID" });
+    const userId = req.userId!;
     const { comment } = req.body;
 
-    if (!comment)
+    if (!comment || typeof comment !== "string" || comment.trim().length === 0)
       return res.status(400).json({ message: "Comment text is required" });
 
-    // Check post exists
+    if (comment.length > MAX_COMMENT_LENGTH)
+      return res.status(400).json({ message: `Comment must be at most ${MAX_COMMENT_LENGTH} characters` });
+
     const postExists = await prisma.post.findUnique({
       where: { id: postId },
-      select: {user_id: true}
+      select: { user_id: true },
     });
 
     if (!postExists)
@@ -25,17 +31,13 @@ export const createComment = async (req: Request, res: Response) => {
 
     const newComment = await prisma.comment.create({
       data: {
-        comment,
+        comment: comment.trim(),
         post_id: postId,
         user_id: userId,
       },
       include: {
         user: {
-          select: {
-            id: true,
-            user_name: true,
-            picture_url: true,
-          },
+          select: { id: true, user_name: true, picture_url: true },
         },
       },
     });
@@ -56,26 +58,27 @@ export const createComment = async (req: Request, res: Response) => {
   }
 };
 
-// --------------------------------------
-// GET COMMENTS OF A POST
-// --------------------------------------
+// ─── GET COMMENTS OF A POST ───────────────────────────────────
 export const getPostComments = async (req: Request, res: Response) => {
   try {
-    const postId = parseInt((req as any).params.postId);
+    const postId = parseInt(params(req).postId ?? '');
+    if (isNaN(postId)) return res.status(400).json({ message: "Invalid post ID" });
+    const q = query(req);
+    const limit = Math.min(parseInt(q.limit || "10"), 50);
+    const page = Math.max(parseInt(q.page || "1"), 1);
+    const skip = (page - 1) * limit;
 
     const comments = await prisma.comment.findMany({
       where: { post_id: postId },
+      take: limit,
+      skip,
       include: {
         user: {
-          select: {
-            id: true,
-            user_name: true,
-            picture_url: true,
-          },
+          select: { id: true, user_name: true, picture_url: true },
         },
-        _count:{
-            select: {replies: true, likes: true}
-        }
+        _count: {
+          select: { replies: true, likes: true },
+        },
       },
       orderBy: { createdAt: "asc" },
     });
@@ -87,21 +90,21 @@ export const getPostComments = async (req: Request, res: Response) => {
   }
 };
 
-// --------------------------------------
-// UPDATE COMMENT
-// --------------------------------------
+// ─── UPDATE COMMENT ───────────────────────────────────────────
 export const updateComment = async (req: Request, res: Response) => {
   try {
-    const commentId = parseInt((req as any).params.commentId);
-    const userId = (req as any).userId as number;
+    const commentId = parseInt(params(req).commentId ?? '');
+    if (isNaN(commentId)) return res.status(400).json({ message: "Invalid comment ID" });
+    const userId = req.userId!;
     const { comment } = req.body;
 
-    if (!comment)
+    if (!comment || typeof comment !== "string" || comment.trim().length === 0)
       return res.status(400).json({ message: "Comment text is required" });
 
-    const existing = await prisma.comment.findUnique({
-      where: { id: commentId },
-    });
+    if (comment.length > MAX_COMMENT_LENGTH)
+      return res.status(400).json({ message: `Comment must be at most ${MAX_COMMENT_LENGTH} characters` });
+
+    const existing = await prisma.comment.findUnique({ where: { id: commentId } });
 
     if (!existing)
       return res.status(404).json({ message: "Comment not found" });
@@ -111,7 +114,7 @@ export const updateComment = async (req: Request, res: Response) => {
 
     const updated = await prisma.comment.update({
       where: { id: commentId },
-      data: { comment },
+      data: { comment: comment.trim() },
     });
 
     return res.json({ message: "Comment updated", comment: updated });
@@ -121,17 +124,14 @@ export const updateComment = async (req: Request, res: Response) => {
   }
 };
 
-// --------------------------------------
-// DELETE COMMENT
-// --------------------------------------
+// ─── DELETE COMMENT ───────────────────────────────────────────
 export const deleteComment = async (req: Request, res: Response) => {
   try {
-    const commentId = parseInt((req as any).params.commentId);
-    const userId = (req as any).userId as number;
+    const commentId = parseInt(params(req).commentId ?? '');
+    if (isNaN(commentId)) return res.status(400).json({ message: "Invalid comment ID" });
+    const userId = req.userId!;
 
-    const existing = await prisma.comment.findUnique({
-      where: { id: commentId },
-    });
+    const existing = await prisma.comment.findUnique({ where: { id: commentId } });
 
     if (!existing)
       return res.status(404).json({ message: "Comment not found" });
@@ -139,9 +139,7 @@ export const deleteComment = async (req: Request, res: Response) => {
     if (existing.user_id !== userId)
       return res.status(403).json({ message: "Unauthorized" });
 
-    await prisma.comment.delete({
-      where: { id: commentId },
-    });
+    await prisma.comment.delete({ where: { id: commentId } });
 
     return res.json({ message: "Comment deleted successfully" });
   } catch (err) {

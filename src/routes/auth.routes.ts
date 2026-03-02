@@ -1,19 +1,20 @@
 import { Router } from "express";
 import { registerUserGoogle, registerUser, loginUser, getMe } from "../controllers/auth.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
-import { hybridRateLimiter } from "../middlewares/hybridRateLimiter.middleware.js";
+import { authRateLimiter } from "../middlewares/hybridRateLimiter.middleware.js";
 
 const router = Router();
 
-router.post("/google", hybridRateLimiter, registerUserGoogle)
+// Google OAuth
+router.post("/google", authRateLimiter, registerUserGoogle);
 
 // Register
-router.post("/register", hybridRateLimiter, registerUser);
+router.post("/register", authRateLimiter, registerUser);
 
 // Login
-router.post("/login", hybridRateLimiter, loginUser);
+router.post("/login", authRateLimiter, loginUser);
 
 // Get logged-in user (protected)
-router.get("/me", authMiddleware, hybridRateLimiter, getMe);
+router.get("/me", authMiddleware, getMe);
 
 export default router;

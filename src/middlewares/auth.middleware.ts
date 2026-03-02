@@ -1,24 +1,33 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from 'jsonwebtoken'
 
-const JWT_SECRET = process.env.JWT_SECRET || "secretkey"
+const JWT_SECRET = process.env.JWT_SECRET!;
+
+interface JwtPayload {
+    id: number;
+}
 
 export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
     try {
         const authHeader = req.headers.authorization;
-        if(!authHeader || !authHeader.startsWith("Bearer ")){
-            return res.status(401).json({message: "Unauthorized"});
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return res.status(401).json({ message: "Unauthorized" });
         }
         const token = authHeader.split(" ")[1];
-        if(!token){
-            return res.status(401).json({message: "Token not Provided"});
+        if (!token) {
+            return res.status(401).json({ message: "Token not Provided" });
         }
 
-        const decoded = jwt.verify(token,JWT_SECRET) as {id: number};
-        (req as any).userId = decoded.id;
+        const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+
+        if (!decoded || typeof decoded.id !== "number") {
+            return res.status(401).json({ message: "Invalid Token" });
+        }
+
+        req.userId = decoded.id;
 
         next();
-    }catch(err){
-        return res.status(401).json({message: "Invalid Token"})
+    } catch (err) {
+        return res.status(401).json({ message: "Invalid Token" })
     }
 };

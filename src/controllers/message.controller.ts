@@ -1,48 +1,48 @@
 import type { Request, Response } from "express";
-import { prisma } from "../lib/prisma";
+import { prisma } from "../lib/prisma.js";
 import { createNotification } from "../services/notification.service.js";
 
-// --------------------------------------
-// SEND MESSAGE
-// --------------------------------------
+const MAX_MESSAGE_LENGTH = 5000;
+
+const params = (req: Request) => req.params as Record<string, string>;
+const query = (req: Request) => req.query as Record<string, string>;
+
+// ─── SEND MESSAGE ─────────────────────────────────────────────
 export const sendMessage = async (req: Request, res: Response) => {
   try {
-    const senderId = (req as any).userId as number;
-    const receiverId = parseInt((req as any).params.receiverId);
+    const senderId = req.userId!;
+    const receiverId = parseInt(params(req).receiverId ?? '');
+    if (isNaN(receiverId)) return res.status(400).json({ message: "Invalid receiver ID" });
+
     const { message } = req.body;
 
-    if (!message) {
+    if (!message || typeof message !== "string" || message.trim().length === 0)
       return res.status(400).json({ message: "Message content is required" });
-    }
 
-    // Prevent sending message to self
-    if (senderId === receiverId) {
+    if (message.length > MAX_MESSAGE_LENGTH)
+      return res.status(400).json({ message: `Message must be at most ${MAX_MESSAGE_LENGTH} characters` });
+
+    if (senderId === receiverId)
       return res.status(400).json({ message: "Cannot message yourself" });
-    }
 
-    // Check receiver exists
-    const receiverExists = await prisma.user.findUnique({
-      where: { id: receiverId },
-    });
+    const receiverExists = await prisma.user.findUnique({ where: { id: receiverId } });
 
-    if (!receiverExists) {
+    if (!receiverExists)
       return res.status(404).json({ message: "Receiver not found" });
-    }
 
     const newMessage = await prisma.message.create({
       data: {
         sender_id: senderId,
         receiver_id: receiverId,
-        message,
+        message: message.trim(),
       },
     });
 
     await createNotification({
       creatorId: senderId,
-      receiverId: receiverId,
+      receiverId,
       reason: "MESSAGE",
     });
-
 
     return res.status(201).json({
       message: "Message sent successfully",
@@ -54,27 +54,27 @@ export const sendMessage = async (req: Request, res: Response) => {
   }
 };
 
-// --------------------------------------
-// GET CONVERSATION WITH USER
-// --------------------------------------
+// ─── GET CONVERSATION WITH USER ───────────────────────────────
 export const getConversation = async (req: Request, res: Response) => {
   try {
-    const currentUserId = (req as any).userId as number;
-    const otherUserId = parseInt((req as any).params.userId);
+    const currentUserId = req.userId!;
+    const otherUserId = parseInt(params(req).userId ?? '');
+    if (isNaN(otherUserId)) return res.status(400).json({ message: "Invalid user ID" });
+
+    const q = query(req);
+    const limit = Math.min(parseInt(q.limit || "50"), 100);
+    const page = Math.max(parseInt(q.page || "1"), 1);
+    const skip = (page - 1) * limit;
 
     const messages = await prisma.message.findMany({
       where: {
         OR: [
-          {
-            sender_id: currentUserId,
-            receiver_id: otherUserId,
-          },
-          {
-            sender_id: otherUserId,
-            receiver_id: currentUserId,
-          },
+          { sender_id: currentUserId, receiver_id: otherUserId },
+          { sender_id: otherUserId, receiver_id: currentUserId },
         ],
       },
+      take: limit,
+      skip,
       orderBy: { createdAt: "asc" },
     });
 
@@ -85,22 +85,17 @@ export const getConversation = async (req: Request, res: Response) => {
   }
 };
 
-// --------------------------------------
-// GET ALL CONVERSATIONS (CHAT LIST)
-// --------------------------------------
+// ─── GET ALL CONVERSATIONS (CHAT LIST) ────────────────────────
 export const getConversations = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).userId as number;
+    const userId = req.userId!;
 
-    // Get latest message per conversation
     const messages = await prisma.message.findMany({
       where: {
-        OR: [
-          { sender_id: userId },
-          { receiver_id: userId },
-        ],
+        OR: [{ sender_id: userId }, { receiver_id: userId }],
       },
       orderBy: { createdAt: "desc" },
+      take: 1000,
       include: {
         sender: {
           select: { id: true, user_name: true, picture_url: true },
@@ -111,12 +106,10 @@ export const getConversations = async (req: Request, res: Response) => {
       },
     });
 
-    // Group by conversation partner
     const conversationMap = new Map<string, any>();
 
     for (const msg of messages) {
-      const otherUser =
-        msg.sender_id === userId ? msg.receiver : msg.sender;
+      const otherUser = msg.sender_id === userId ? msg.receiver : msg.sender;
 
       if (!conversationMap.has(otherUser.id.toString())) {
         conversationMap.set(otherUser.id.toString(), {
@@ -133,26 +126,20 @@ export const getConversations = async (req: Request, res: Response) => {
   }
 };
 
-// --------------------------------------
-// MARK MESSAGE AS READ
-// --------------------------------------
+// ─── MARK MESSAGE AS READ ─────────────────────────────────────
 export const markMessageAsRead = async (req: Request, res: Response) => {
   try {
-    const messageId = parseInt((req as any).params.messageId);
-    const userId = (req as any).userId as number;
+    const messageId = parseInt(params(req).messageId ?? '');
+    if (isNaN(messageId)) return res.status(400).json({ message: "Invalid message ID" });
+    const userId = req.userId!;
 
-    const message = await prisma.message.findUnique({
-      where: { id: messageId },
-    });
+    const message = await prisma.message.findUnique({ where: { id: messageId } });
 
-    if (!message) {
+    if (!message)
       return res.status(404).json({ message: "Message not found" });
-    }
 
-    // Only receiver can mark as read
-    if (message.receiver_id !== userId) {
+    if (message.receiver_id !== userId)
       return res.status(403).json({ message: "Unauthorized" });
-    }
 
     const updated = await prisma.message.update({
       where: { id: messageId },
