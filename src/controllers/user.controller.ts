@@ -168,9 +168,20 @@ export const searchUsers = async (req: Request, res: Response) => {
           id: true,
           user_name: true,
           picture_url: true,
+          // "followings" = Follow records where following_id = targetUser.id
+          // filtering by follower_id: userId checks if loggedUser follows targetUser ✓
+          followings: {
+            where: { follower_id: userId },
+            select: { follower_id: true },
+          },
         },
       });
-      return res.json(users);
+      return res.json(
+        users.map(({ followings, ...u }) => ({
+          ...u,
+          isFollowing: followings.length > 0,
+        }))
+      );
     }
 
     // Validate search length to prevent abuse
@@ -190,10 +201,19 @@ export const searchUsers = async (req: Request, res: Response) => {
         id: true,
         user_name: true,
         picture_url: true,
+        followings: {
+          where: { follower_id: userId },
+          select: { follower_id: true },
+        },
       },
     });
 
-    return res.json(users);
+    return res.json(
+      users.map(({ followings, ...u }) => ({
+        ...u,
+        isFollowing: followings.length > 0,
+      }))
+    );
   } catch (err) {
     return res.status(500).json({ message: "Internal server error" });
   }
