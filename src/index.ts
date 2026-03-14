@@ -10,6 +10,7 @@ import likeRoutes from './routes/like.routes.js'
 import followRoutes from './routes/follow.routes.js'
 import messageRoutes from './routes/message.routes.js'
 import notificationRoutes from './routes/notification.routes.js'
+import uploadRoutes from './routes/upload.routes.js'
 import cors from "cors";
 import { globalRateLimiter } from './middlewares/globalRateLimiter.middleware.js'
 import { errorHandler } from './middlewares/error.middleware.js'
@@ -48,6 +49,7 @@ app.use("/likes", likeRoutes);
 app.use("/follow", followRoutes);
 app.use("/messages", messageRoutes);
 app.use("/notifications", notificationRoutes);
+app.use("/upload", uploadRoutes);
 
 // ─── Global Error Handler (must be last) ───────────────────────
 app.use(errorHandler);
