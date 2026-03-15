@@ -47,7 +47,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     if (req.userId !== id)
       return res.status(403).json({ message: "You can only update your own profile" });
 
-    const { user_name, phone, location, dob, about } = req.body;
+    const { user_name, phone, location, dob, about, picture_url } = req.body;
 
     // Validate fields if provided
     if (user_name !== undefined) {
@@ -70,6 +70,10 @@ export const updateUserProfile = async (req: Request, res: Response) => {
       return res.status(400).json({ message: `Location must be at most ${MAX_LOCATION_LENGTH} characters` });
     }
 
+    if (picture_url !== undefined && typeof picture_url !== "string") {
+      return res.status(400).json({ message: `Picture URL must be a string` });
+    }
+
     const user = await prisma.user.update({
       where: { id },
       data: {
@@ -78,6 +82,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
         location,
         dob,
         about,
+        picture_url
       },
     });
 
