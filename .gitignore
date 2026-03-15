@@ -5,3 +5,5 @@ node_modules
 src/generated/prisma
 
 *.rest
+build_errors.txt
+dist/
